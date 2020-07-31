@@ -3,7 +3,7 @@ import React from "react";
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {speed: 0}
+    this.state = {speed: 0, start: true}
   }
 
   drawGrid(){
@@ -25,15 +25,22 @@ class App extends React.Component {
     }
 
     let grid = buildGrid();
+    console.log("This is grid", grid)
 
     requestAnimationFrame(update)
+    
 
     function update() {
-      grid = nextGen(grid);
-      renderGrid(grid);
-      setTimeout(() => {
+      if (everything.state.start){
+        grid = nextGen(grid);
+        renderGrid(grid)
+        setTimeout(() => {
+          requestAnimationFrame(update)
+        }, everything.state.speed)
+      }
+      else {
         requestAnimationFrame(update)
-      }, everything.state.speed)
+      }
     }
 
     function nextGen(grid) {
@@ -102,9 +109,13 @@ class App extends React.Component {
     }
 
     slider_speed()
+
   } 
 
-
+  startStop() {
+    this.setState({start: !this.state.start})
+    console.log(this.state)
+  }
   
   componentDidMount() {
     this.drawGrid()
@@ -121,6 +132,8 @@ class App extends React.Component {
           <button onClick={this.drawGrid}>Change</button>
           <input type="range" min="1" max="500" class="slider" id="myRange"></input>
           <p>Value: <span id="valueSlider"></span></p>
+          <button onClick={() => this.startStop()}>Start</button>
+          <button onClick={() => this.startStop()}>Stop</button>
         </div>
       );
       }
