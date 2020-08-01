@@ -3,7 +3,7 @@ import React from "react";
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {speed: 0, start: true, random : false}
+    this.state = {speed: 0, start: true, random : false, generation: 0}
   }
 
   drawGrid(){
@@ -11,9 +11,9 @@ class App extends React.Component {
     const canvas = document.querySelector('canvas')
     const ctx = canvas.getContext('2d');
 
-    const resolution = 10
-    canvas.width = 800
-    canvas.height = 800
+    const resolution = 40
+    canvas.width = 1200
+    canvas.height = 1200
 
     const COLS = canvas.width / resolution
     const ROWS = canvas.height / resolution
@@ -32,6 +32,7 @@ class App extends React.Component {
 
     function update() {
       if (everything.state.start){
+        everything.setState({generation: everything.state.generation + 1})
         grid = nextGen(grid);
         if (everything.state.random){
           grid = buildGrid()
@@ -85,21 +86,23 @@ class App extends React.Component {
     }
 
     function renderGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
       for (let col = 0; col < COLS; col++) {
         for (let row = 0; row < ROWS; row++) {
           const cell = grid[col][row];
-
           ctx.beginPath();
-          ctx.rect(col * resolution, row * resolution, resolution, resolution)
-          ctx.fillStyle = cell ? 'darkgray' : 'white';
+          // ctx.rect(col * resolution, row * resolution, resolution - resolution * 0.2, resolution - resolution * 0.2)
+          ctx.arc(col * resolution, row * resolution, resolution / 3, 0, 2 * Math.PI)
+          ctx.fillStyle = cell ? 'black' : 'white';
           ctx.fill()
         }
       }
     }
 
     canvas.addEventListener('click', function(event) {
-      var cellX = Math.floor((event.clientX) / resolution);
-      var cellY = Math.floor((event.clientY + resolution *2) / resolution);
+      const rect = canvas.getBoundingClientRect()
+      let cellX = Math.floor((event.clientX - rect.left) / (resolution + 1.2))
+      let cellY = Math.floor((event.clientY - rect.top) / (resolution + 1))
       grid[cellX][cellY] = !grid[cellX][cellY];
       renderGrid();
     });
@@ -140,9 +143,8 @@ class App extends React.Component {
   render() {
     return (
         <div className="App">
-          <h1>Hello CodeSandbox</h1>
-          <h2>Start editing to see some magic happen!</h2>
-          <canvas></canvas>
+          <h1>Game Of Life</h1>
+          <canvas id="canvas" ></canvas>
           <button onClick={() => {
             this.setState({random: true})
           }}>Change</button>
@@ -150,6 +152,7 @@ class App extends React.Component {
           <p>Speed: <span id="valueSlider"></span> milliseconds</p>
           <button value = "start" onClick={(event) => this.startStop(event)}>Start</button>
           <button value = "stop" onClick={(event) => this.startStop(event)}>Stop</button>
+          <div>Generation: {this.state.generation}</div>
           <div>The universe of the Game of Life is an infinite, two-dimensional orthogonal grid of square cells, each of which is in one of two possible states, live or dead, (or populated and unpopulated, respectively). Every cell interacts with its eight neighbours, which are the cells that are horizontally, vertically, or diagonally adjacent. At each step in time, the following transitions occur:
                 <div>Any live cell with fewer than two live neighbours dies, as if by underpopulation.</div>
                 <div>Any live cell with two or three live neighbours lives on to the next generation.</div>
