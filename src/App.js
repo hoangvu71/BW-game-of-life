@@ -36,18 +36,26 @@ class App extends React.Component {
     
 
     function update() {
+      if (everything.state.blank) {
+        grid = buildGridBlank()
+        renderGrid(grid)
+        requestAnimationFrame(update)
+        everything.setState({start: true})
+      }
+      if (everything.state.random){
+        grid = buildGrid()
+        everything.setState({start: true})
+        everything.setState({random: false})
+      }
       if (everything.state.start){
-        everything.setState({generation: everything.state.generation + 1})
-        grid = nextGen(grid);
-        if (everything.state.random){
-          grid = buildGrid()
-        }
         if (everything.state.blank) {
-          grid = buildGridBlank()
-          renderGrid(grid)
-
+          everything.setState({start: false})
           everything.setState({blank: false})
         }
+        everything.setState({generation: everything.state.generation + 1})
+        grid = nextGen(grid);
+        
+
         everything.setState({random: false})
         renderGrid(grid)
         setTimeout(() => {
