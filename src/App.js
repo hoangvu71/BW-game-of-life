@@ -3,7 +3,7 @@ import React from "react";
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {speed: 0, start: true, random : false, generation: 0}
+    this.state = {speed: 0, start: true, random : false, generation: 0, blank : false, nextStep: false}
   }
 
   drawGrid(){
@@ -12,8 +12,8 @@ class App extends React.Component {
     const ctx = canvas.getContext('2d');
 
     const resolution = 40
-    canvas.width = 1200
-    canvas.height = 1200
+    canvas.width = 1000
+    canvas.height = 1000
 
     const COLS = canvas.width / resolution
     const ROWS = canvas.height / resolution
@@ -22,6 +22,11 @@ class App extends React.Component {
       return new Array(COLS).fill(null)
         .map(() => new Array(ROWS).fill(0)
           .map(() => Math.floor(Math.random() * 1.3)))
+    }
+
+    function buildGridBlank(){
+      return new Array(COLS).fill(null)
+        .map(() => new Array(ROWS).fill(0))
     }
 
     let grid = buildGrid();
@@ -37,11 +42,25 @@ class App extends React.Component {
         if (everything.state.random){
           grid = buildGrid()
         }
+        if (everything.state.blank) {
+          grid = buildGridBlank()
+          renderGrid(grid)
+
+          everything.setState({blank: false})
+        }
         everything.setState({random: false})
         renderGrid(grid)
         setTimeout(() => {
           requestAnimationFrame(update)
         }, everything.state.speed)
+      }
+      else if ( !everything.state.start && everything.state.nextStep) {
+        console.log("Is it running?")
+        everything.setState({nextStep: false})
+        grid = nextGen(grid);
+
+        renderGrid(grid)
+        requestAnimationFrame(update)
       }
       else {
         requestAnimationFrame(update)
@@ -55,31 +74,62 @@ class App extends React.Component {
         for (let row = 0; row < grid[col].length; row++) {
           const cell = grid[col][row];
           let numNeighbors = 0;
-          for (let i = -1; i < 2; i++) {
-            for (let j = -1; j < 2; j++){
-              if (i === 0 && j === 0) {
-                continue;
-              }
-              const x_cell = col + i;
-              const y_cell = row + j;
+          // for (let i = -1; i < 2; i++) {
+          //   for (let j = -1; j < 2; j++){
+          //     if (i === 0 && j === 0) {
+          //       continue;
+          //     }
+          //     const x_cell = col + i;
+          //     const y_cell = row + j;
 
-              if (x_cell >= 0 && y_cell >= 0 && x_cell < COLS && y_cell < ROWS) {
-                const currentNeighbor = grid[col + i][row + j];
-                numNeighbors += currentNeighbor;
-              } 
-            }
+          //     if (x_cell >= 0 && y_cell >= 0 && x_cell < COLS && y_cell < ROWS) {
+          //       const currentNeighbor = grid[col + i][row + j];
+          //       numNeighbors += currentNeighbor;
+          //     } 
+          //   }
+          // }
+
+          // Check for neighbors
+          if ( col - 1 >= 0 && row -1 >= 0 && col + 1 < COLS && row + 1 < ROWS) {
+              if (grid[col - 1][row - 1]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col][row - 1]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col + 1][row - 1]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col - 1][row]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col + 1][row]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col - 1][row + 1]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col][row + 1]){
+                numNeighbors = numNeighbors + 1
+              }
+              if (grid[col + 1][row + 1]){
+                numNeighbors = numNeighbors + 1
+              }
           }
+          
+
           // rules            
 
-          if (cell === 1 && numNeighbors < 2) {
+          if (cell == 1 && numNeighbors < 2) {
             nextGen[col][row] = 0;
           }
-          else if (cell === 1 && numNeighbors > 3) {
+          else if (cell == 1 && numNeighbors > 3) {
             nextGen[col][row] = 0;
           }
-          else if (cell === 0 && numNeighbors ===3) {
+          else if (cell == 0 && numNeighbors == 3) {
             nextGen[col][row] = 1;
           }
+          
         }
       }
     return nextGen;
@@ -95,14 +145,15 @@ class App extends React.Component {
           ctx.arc(col * resolution, row * resolution, resolution / 3, 0, 2 * Math.PI)
           ctx.fillStyle = cell ? 'black' : 'white';
           ctx.fill()
+          ctx.stroke()
         }
       }
     }
 
     canvas.addEventListener('click', function(event) {
       const rect = canvas.getBoundingClientRect()
-      let cellX = Math.floor((event.clientX - rect.left) / (resolution + 1.2))
-      let cellY = Math.floor((event.clientY - rect.top) / (resolution + 1))
+      let cellX = Math.floor((event.clientX - rect.left - resolution) / (resolution))
+      let cellY = Math.floor((event.clientY - rect.top - resolution) / (resolution))
       grid[cellX][cellY] = !grid[cellX][cellY];
       renderGrid();
     });
@@ -148,6 +199,12 @@ class App extends React.Component {
           <button onClick={() => {
             this.setState({random: true})
           }}>Change</button>
+          <button onClick={() => {
+            this.setState({blank: true})
+          }}>Blank</button>
+          <button onClick={() => {
+            this.setState({nextStep: true})
+          }}>Next Step</button>
           <input type="range" min="1" max="500" class="slider" id="myRange"></input>
           <p>Speed: <span id="valueSlider"></span> milliseconds</p>
           <button value = "start" onClick={(event) => this.startStop(event)}>Start</button>
