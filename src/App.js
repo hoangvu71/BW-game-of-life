@@ -134,7 +134,7 @@ class App extends React.Component {
           else if (cell === 1 && numNeighbors > 3) {
             nextGen[col][row] = 0;
           }
-          else if (cell === 0 && numNeighbors == 3) {
+          else if (cell === 0 && numNeighbors === 3) {
             nextGen[col][row] = 1;
           }
           
